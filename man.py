@@ -3,7 +3,7 @@ import networkx as nx
 from PIL import Image, ImageTk
 from pila import Stack
 import time
-import matplotlib.pyplot as plt  # Added for generating the graph image
+import matplotlib.pyplot as plt
 
 class Automaton:
     def __init__(self):
@@ -39,12 +39,11 @@ class PalindromeRecognizerApp:
     def __init__(self, root):
         self.root = root
         self.root.title('Palindrome Recognizer')
-        self.root.geometry("700x600")
+        self.root.geometry("1000x800")  # Ajustar el tamaño de la ventana
 
         self.label = tk.Label(root, text='Enter a string (abbbba format):')
         self.label.pack()
 
-        # Cuadro de entrada para la palabra
         self.entry = tk.Entry(root)
         self.entry.pack()
 
@@ -63,24 +62,25 @@ class PalindromeRecognizerApp:
         self.result_label.config(fg="Purple", font=label_style)
         self.state_label.config(fg="Purple", font=label_style)
 
-        # Create a graph to represent the automaton
         self.graph = nx.DiGraph()
         self.graph.add_nodes_from(['q0', 'q1', 'q2'])
-        self.graph.add_edges_from([('q0', 'q1', {'label': 'a'}),
-                                   ('q0', 'q2', {'label': 'b'}),
-                                   ('q1', 'q1', {'label': 'a'}),
-                                   ('q1', 'q2', {'label': 'b'}),
-                                   ('q2', 'q2', {'label': 'a'}),
-                                   ('q2', 'q2', {'label': 'b'})])
+        self.graph.add_edges_from([
+            ('q0', 'q1', {'label': 'a'}),
+            ('q0', 'q2', {'label': 'b'}),
+            ('q1', 'q1', {'label': 'a'}),
+            ('q1', 'q2', {'label': 'b'}),
+            ('q2', 'q2', {'label': 'a'}),
+            ('q2', 'q2', {'label': 'b'})
+        ])
 
-        pos = nx.spring_layout(self.graph)
+        pos = nx.spring_layout(self.graph, k=0.5)  
         edge_labels = {(u, v): d['label'] for u, v, d in self.graph.edges(data=True)}
         self.node_colors = ['lightblue' for _ in range(len(self.graph.nodes))]
 
-        self.canvas = tk.Canvas(root, width=400, height=400)
+        self.canvas = tk.Canvas(root, width=800, height=600)  # Ajustar el tamaño del lienzo
         self.canvas.pack()
 
-        self.update_graph()  # Added to display the initial graph
+        self.update_graph()
 
     def check_palindrome(self):
         input_str = self.entry.get()
@@ -101,13 +101,21 @@ class PalindromeRecognizerApp:
             self.result_label.config(text='Result: Not a valid palindrome')
 
     def update_graph(self):
-        pos = nx.spring_layout(self.graph)
+        pos = nx.spring_layout(self.graph, k=0.5)  
         edge_labels = {(u, v): d['label'] for u, v, d in self.graph.edges(data=True)}
-        nx.draw(self.graph, pos, with_labels=True, node_color=self.node_colors, node_size=800, font_size=10)
+        nx.draw(self.graph, pos, with_labels=True, node_color=self.node_colors, node_size=200, font_size=10)  
         nx.draw_networkx_edge_labels(self.graph, pos, edge_labels=edge_labels)
-        plt.savefig('automaton.png')  # Save the graph as 'automaton.png' using matplotlib
+
+        
+        fig = plt.figure(figsize=(8, 6))
+        ax = fig.add_subplot(111)
+        ax.axis('off')
+        nx.draw(self.graph, pos, with_labels=True, node_color=self.node_colors, node_size=200, font_size=10)
+        nx.draw_networkx_edge_labels(self.graph, pos, edge_labels=edge_labels)
+        plt.savefig('automaton.png', bbox_inches='tight', transparent=True)
+
         self.graph_image = ImageTk.PhotoImage(Image.open('automaton.png'))
-        self.canvas.delete("all")  # Clear the canvas
+        self.canvas.delete("all")
         self.graph_label = self.canvas.create_image(20, 20, anchor=tk.NW, image=self.graph_image)
         self.canvas.update()
 
