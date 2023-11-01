@@ -23,7 +23,6 @@ class Automaton:
         self.reset()
         for symbol in input_str:
             if symbol in self.states[self.current_state]:
-
                 next_state, action = self.states[self.current_state][symbol]
                 if action == 'pop_push':
                     self.stack.pop()
@@ -57,17 +56,14 @@ class PalindromeRecognizerApp:
         self.state_label = tk.Label(root, text='Current State: q0')
         self.state_label.pack()
 
-        
         self.speed_label = tk.Label(root, text='Speed:', font=("Helvetica", 14, "bold"))
         self.speed_label.pack()
 
-    
         self.speed_scale = tk.Scale(root, from_=0.1, to=2.0, resolution=0.1, orient="horizontal", length=300)
         self.speed_scale.set(1.0)
         self.speed_scale.pack()
 
         label_style = ("Helvetica", 14, "bold")
-
         self.label.config(fg="Purple", font=label_style)
         self.result_label.config(fg="Purple", font=label_style)
         self.state_label.config(fg="Purple", font=label_style)
@@ -84,8 +80,12 @@ class PalindromeRecognizerApp:
             ('q2', 'q2', {'label': 'b'})
         ])
 
-        pos = nx.spring_layout(self.graph, k=0.5)
-        edge_labels = {(u, v): d['label'] for u, v, d in self.graph.edges(data=True)}
+        self.node_positions = {
+            'q0': (100, 100),
+            'q1': (300, 100),
+            'q2': (200, 300),
+        }
+
         self.node_colors = ['lightblue' for _ in range(len(self.graph.nodes))]
 
         self.canvas = tk.Canvas(root, width=800, height=600)
@@ -100,13 +100,17 @@ class PalindromeRecognizerApp:
 
         speed = self.speed_scale.get()
 
+        prev = None
         for i, (state, _) in enumerate(automaton.process_input(input_str)):
             self.node_colors[list(self.graph.nodes).index(state)] = 'lightcoral'
             self.state_label.config(text=f'Current State: {state} -> Next Symbol: {input_str[i]}')
             self.root.update()
+            self.node_colors[list(self.graph.nodes).index(state)] = 'red'
             time.sleep(0.5 / speed)
-            self.node_colors[list(self.graph.nodes).index(state)] = 'lightblue'
+            if prev is not None:
+                self.node_colors[prev] = 'lightcoral'
             self.update_graph()
+            prev = list(self.graph.nodes).index(state)
 
         if automaton.is_valid():
             self.result_label.config(text='Result: Valid Palindrome')
@@ -114,14 +118,13 @@ class PalindromeRecognizerApp:
             self.result_label.config(text='Result: Not a valid palindrome')
 
     def update_graph(self):
-        pos = nx.spring_layout(self.graph, k=0.5)
         edge_labels = {(u, v): d['label'] for u, v, d in self.graph.edges(data=True)}
-        nx.draw(self.graph, pos, with_labels=True, node_color=self.node_colors, node_size=300, font_size=10)
-        nx.draw_networkx_edge_labels(self.graph, pos, edge_labels=edge_labels)
 
         fig = plt.figure(figsize=(6, 4))
         ax = fig.add_subplot(111)
         ax.axis('off')
+        pos = self.node_positions
+
         nx.draw(self.graph, pos, with_labels=True, node_color=self.node_colors, node_size=300, font_size=10)
         nx.draw_networkx_edge_labels(self.graph, pos, edge_labels=edge_labels)
         plt.savefig('automaton.png', bbox_inches='tight', transparent=True)
